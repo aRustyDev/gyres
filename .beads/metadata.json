@@ -1,0 +1,8 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_server_port": 13306,
+  "dolt_database": "gyres",
+  "project_id": "52e4add2-34b8-449c-9a3a-b3d40be81af3"
+}
