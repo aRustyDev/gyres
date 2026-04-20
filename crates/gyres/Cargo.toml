@@ -1,0 +1,40 @@
+[package]
+name = "gyres"
+description = "A Rust agent harness — general-purpose feedback loop framework for LLM, RL, and beyond"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+gyres-core.workspace = true
+
+[features]
+default = ["llm", "tracing"]
+llm = ["dep:gyres-llm"]
+runtime = ["dep:gyres-runtime"]
+polar = ["dep:gyres-polar"]
+tracing = ["dep:gyres-tracing"]
+mcp = ["dep:gyres-mcp"]
+full = ["llm", "runtime", "polar", "tracing", "mcp"]
+
+[dependencies.gyres-llm]
+workspace = true
+optional = true
+
+[dependencies.gyres-runtime]
+workspace = true
+optional = true
+
+[dependencies.gyres-polar]
+workspace = true
+optional = true
+
+[dependencies.gyres-tracing]
+workspace = true
+optional = true
+
+[dependencies.gyres-mcp]
+workspace = true
+optional = true

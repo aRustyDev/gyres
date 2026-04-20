@@ -1,0 +1,15 @@
+[package]
+name = "gyres-polar"
+description = "Embedded policy engine for Gyres permission evaluation (forked from Oso Polar)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+gyres-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
