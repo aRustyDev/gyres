@@ -6,7 +6,7 @@ pub enum GyreError {
     PermissionDenied(String),
 
     #[error("agent error: {0}")]
-    Agent(String),
+    Agent(#[source] Box<dyn std::error::Error + Send + Sync>),
 
     #[error("state store error: {0}")]
     State(String),

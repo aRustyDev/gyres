@@ -1,0 +1,4 @@
+adr_dir = "docs/src/adrs"
+mode = "ng"
+
+[templates]

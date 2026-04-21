@@ -44,3 +44,6 @@ reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-feature
 
 # Async traits
 async-trait = "0.1"
+
+# Utilities
+dirs = "6"
