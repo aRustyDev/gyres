@@ -1,5 +1,5 @@
 /// Unique identifier for an agent instance.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct AgentId(String);
 
 impl AgentId {

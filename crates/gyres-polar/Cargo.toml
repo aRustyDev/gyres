@@ -1,7 +1,7 @@
 [package]
 name = "gyres-polar"
 description = "Embedded policy engine for Gyres permission evaluation (forked from Oso Polar)"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true

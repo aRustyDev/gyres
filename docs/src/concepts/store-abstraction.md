@@ -157,12 +157,13 @@ gyres-core/
 ├── src/artifact.rs      # ArtifactStore trait
 └── src/backend.rs       # Backend trait, BackendConfig, Stores factory
 
-gyres-store-sqlite/      # SqliteBackend implementing all four Store traits
-gyres-store-surreal/     # SurrealBackend implementing all four
-gyres-store-memory/      # InMemoryBackend for testing
+gyres-store/             # All backend implementations, feature-gated
+├── src/memory.rs        # InMemoryBackend (default, always available)
+├── src/sqlite.rs        # SqliteBackend (feature = "backend-sqlite")
+└── src/surreal.rs       # SurrealBackend (feature = "backend-surreal")
 ```
 
-Store traits live in gyres-core (consumers depend on them). Backend implementations live in separate crates (feature-gated, bring your own).
+Store traits live in gyres-core (consumers depend on them). Backend implementations live in `gyres-store` — a single crate with feature-gated backends (ADR 0016). Users add `gyres-store = { features = ["backend-sqlite"] }`. The `InMemoryBackend` is always available (no feature flag) for testing and as the `GyreContext::minimal()` default.
 
 ## TaskStore: Graph Shape
 

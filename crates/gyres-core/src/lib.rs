@@ -14,11 +14,15 @@
 #![forbid(unsafe_code)]
 
 pub mod agent;
+pub mod artifact;
+pub mod backend;
 pub mod config;
 pub mod context;
 pub mod error;
 pub mod gyre;
+pub mod memory;
 pub mod permissions;
 pub mod state;
+pub mod task;
 pub mod telemetry;
 pub mod types;

@@ -1,7 +1,7 @@
 [package]
 name = "gyres"
 description = "A Rust agent harness — general-purpose feedback loop framework for LLM, RL, and beyond"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true

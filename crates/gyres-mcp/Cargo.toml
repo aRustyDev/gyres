@@ -1,7 +1,7 @@
 [package]
 name = "gyres-mcp"
 description = "Model Context Protocol bridge for Gyres — stdio and SSE transports"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
