@@ -27,7 +27,7 @@ gyres-tracing = { path = "crates/gyres-tracing", version = "0.0.1" }
 gyres-mcp = { path = "crates/gyres-mcp", version = "0.0.1" }
 
 # Async runtime
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "time", "macros", "fs", "process", "signal", "io-util"] }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
