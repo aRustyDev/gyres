@@ -275,3 +275,13 @@ pub enum GyreError {
     Other(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 ```
+
+```rust
+pub trait RagStrategy {
+    // RAG — this is a composition of Memory + Search + ContextWindow management.
+    // ContextWindow — this is LLM-specific (token budgets, compaction)
+    // RL agents don't have ContextWindow. But the concept of "bounded working memory" could be abstracted if you want it cross-domain.
+    // Search — a capability (tool)
+    fn retrieve(&self, m: Memory, s: Search, cw: ContextWindow, ctx: Option<SpanId>) {}
+}
+```
