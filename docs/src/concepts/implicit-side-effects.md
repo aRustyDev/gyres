@@ -1,58 +1,46 @@
 # Implicit Side-Effects
 
+> **Note:** The artifact type system and store architecture have been formalized in [artifact-taxonomy.md](artifact-taxonomy.md). This document describes the original vision. Where they conflict, the taxonomy document is authoritative.
+
 ## Concept
 
-As agents work, they produce knowledge, decisions, and documentation as natural byproducts. Rather than requiring agents to explicitly "write an ADR" or "update documentation," the harness captures these as implicit side-effects.
+As agents work, they produce knowledge, decisions, and documentation as natural byproducts. Rather than requiring agents to explicitly "write an ADR" or "update documentation," the Gyre captures these as implicit side-effects and routes them to the appropriate domain store.
 
-## The ArtifactStore
+## How the Gyre Routes Work Products
 
-ArtifactStore is a Store trait (readable + writable), not just a sink:
-- **Write path:** Gyre emits artifacts as agents work.
-- **Read path:** Artifacts are retrievable via search for RAG context — the agent's own outputs become future inputs.
-
-This creates a virtuous cycle: agent produces knowledge → stored as artifact → retrieved as context for future work → agent builds on prior knowledge.
-
-## Artifact Types (not yet formalized — see gyres-24p)
-
-Candidates for first-class artifact types:
-- **Decision** — architectural or design choice with context and rationale (ADR-like)
-- **Documentation** — generated docs, READMEs, API references
-- **Plan** — task decomposition, implementation strategy
-- **Specification** — formal requirements or contracts
-- **Note** — Zettelkasten-style atomic knowledge unit
-- **Relationship** — a discovered connection between entities
-
-Open question: are these variants of an `Artifact` enum, or implementations of a `Document` trait? Tracked in gyres-24p.
-
-## Where the Gyre emits
-
-The Gyre is responsible for recognizing artifact-worthy outputs:
+The Gyre is responsible for recognizing artifact-worthy outputs and routing them:
 
 ```
 Agent step → response contains architectural decision
   → Gyre detects decision pattern
-  → Gyre emits Artifact::Decision to ArtifactStore
-  → Decision is searchable for future RAG retrieval
+  → Gyre creates Document (ADR) in DocumentStore
+  → Gyre stores rationale as MemoryEntry in MemoryStore
+  → Both are searchable via ArtifactStore for future RAG retrieval
 ```
 
-Detection can be:
+This creates a virtuous cycle: agent produces knowledge → stored in domain store → retrievable via ArtifactStore as context for future work → agent builds on prior knowledge.
+
+Detection strategies (from most to least autonomous):
 - **Pattern-based:** regex/keyword matching on agent output
-- **Agent-based:** a dedicated "observer" agent that evaluates outputs
-- **Explicit:** the agent itself signals "this is a decision" via metadata
+- **Agent-based:** a dedicated observer agent that evaluates outputs
+- **Explicit:** the agent signals via structured output metadata
+
+## Artifact Types
+
+Resolved in [artifact-taxonomy.md](artifact-taxonomy.md). The type hierarchy:
+
+- **Task** — work items at all PM levels (theme, epic, story, task, subtask)
+- **MemoryEntry** — mutable agent knowledge and observations
+- **Document** — structured documents with typed lifecycle (ADR, PRD, Roadmap, Plan, FeatureSpec)
 
 ## Relationship to Memory
 
-Artifacts and memories are related but distinct:
+Both Memories and Documents are Artifacts. The distinction is access pattern, not audience:
 
-| | Memory (MemoryStore) | Artifact (ArtifactStore) |
-|---|---|---|
-| Audience | The agent (machine) | Humans + agents |
-| Format | Structured for retrieval | Structured for reading |
-| Lifecycle | Mutable (updated, consolidated, forgotten) | Append-mostly (immutable once emitted) |
-| Purpose | Context for future steps | Record of what happened |
-| Example | "User prefers TypeScript" | ADR: "Chose TypeScript over Python because..." |
+- **MemoryStore** — mutable, semantic recall, agent knowledge. The agent's working memory.
+- **DocumentStore** — lifecycle-managed, versioned, structured. Formal records of decisions and plans.
 
-Both can be backed by the same database. Both are searchable. The distinction is semantic, not technical.
+Both are backed by the same database and searchable via ArtifactStore.
 
 ## Graph integration
 
