@@ -619,14 +619,98 @@ Scrum does not define Themes, Initiatives, or Epics in the Scrum Guide. These ar
 
 Kanban prescribes no hierarchy or time-boxing. Work items flow through columns (states) with WIP limits. Teams often adopt a light hierarchy (epic → story → task) by convention, but this is not part of the method.
 
+## Agile Concepts as Gyres Primitives
+
+Not every Agile concept is a stored type. Some are query patterns, some are computed views, some are relationship patterns. This section classifies each.
+
+### Classification Table
+
+| Agile Concept | Gyres Primitive | Classification | Notes |
+|---|---|---|---|
+| Sprint / Cycle | Separate type (not a Task) | Time-box | Many-to-many relationship to Tasks via `relate()` or metadata. See "Time-boxes" section above. |
+| Product Backlog | `TaskStore::list_tasks()` query | Query pattern | All open tasks sorted by priority. Not a stored entity. |
+| Sprint Backlog | `TaskStore::list_tasks()` + sprint filter | Query pattern | Tasks assigned to a specific sprint (time-box). A filtered subset of the product backlog. |
+| PRD | Document (kind: prd) | Stored artifact | See [artifact-taxonomy.md](artifact-taxonomy.md). |
+| Roadmap | Document (kind: roadmap) | Stored artifact | See [artifact-taxonomy.md](artifact-taxonomy.md). |
+| RACI Chart | Agent roles on Tasks | Relationship pattern | See detail below. |
+| GANTT Chart | Computed from TaskStore DAG | Computed view | See detail below. |
+| Burndown / Velocity | Computed from TaskStore + TelemetrySink | Computed view | Derived from task completion rates over time. Telemetry concern, not a store concern. |
+| Retrospective | Document (kind: custom "retro") or Memory | Stored artifact | Lessons learned — Document if formal, Memory if agent-recallable knowledge. |
+| Definition of Done | Memory or Document (kind: custom "dod") | Stored artifact | Team-wide criteria. As Memory: always-recalled agent context. As Document: versioned governance. Similar to spec-kit's constitution. |
+
+### Backlogs
+
+A backlog is a prioritized query over TaskStore, not a stored entity.
+
+```rust
+// Product backlog: all open work, sorted by priority
+task_store.list_tasks(&TaskFilter {
+    status: Some(TaskStatus::Ready),  // or {Ready, Blocked}
+    ..Default::default()
+})
+// → sorted by Task.metadata["priority"]
+
+// Sprint backlog: tasks assigned to a specific sprint
+// (sprint assignment is a relationship or metadata field)
+task_store.list_tasks(&TaskFilter {
+    status: Some(TaskStatus::InProgress),
+    ..Default::default()
+})
+// → filtered by Task.metadata["sprint_id"] or relate() edge
+
+// Team backlog: tasks for a specific agent/team
+task_store.list_tasks(&TaskFilter {
+    assignee: Some(agent_id),
+    status: Some(TaskStatus::Ready),
+    ..Default::default()
+})
+```
+
+Different backlog views are just different filter+sort combinations on the same TaskStore data.
+
+### RACI (Responsible, Accountable, Consulted, Informed)
+
+RACI maps agent roles to tasks. In single-agent gyres, only Responsible matters. In multi-agent, all four become relevant.
+
+| RACI Role | Gyres Mapping | When it matters |
+|---|---|---|
+| **Responsible** | `Task.assignee: Option<AgentId>` | Always — the agent doing the work |
+| **Accountable** | Parent task's assignee, or a dedicated `owner` field on Task | Multi-agent — the supervisor/orchestrator that delegated and owns the outcome |
+| **Consulted** | `relate(task, "consults", agent_id)` or `Task.metadata["consulted"]` | Multi-agent — agents whose knowledge is needed before/during work |
+| **Informed** | Subscription/notification pattern (MessageBus or TelemetrySink) | Multi-agent OS concern — agents notified of status changes |
+
+**Design implication:** R is a first-class field (assignee, already on Task). A may warrant a second field (owner/accountable) if multi-agent delegation is common — or it can be derived from the parent task's assignee in the DAG. C and I are relationship/notification concerns, not Task fields.
+
+### GANTT Charts
+
+A GANTT chart is a computed view, not a stored artifact. It is derived from:
+
+1. **TaskStore DAG** — dependency relationships (what blocks what)
+2. **Time estimates** — `Task.metadata["estimate"]` (hours or story points)
+3. **Start dates** — `Task.metadata["start_date"]` or derived from dependency resolution
+4. **Critical path** — computed via `blockers()`/`dependents()` traversal
+
+```
+GANTT = TaskStore.list_tasks()
+      + dependency graph (blockers/dependents traversal)
+      + time estimates (metadata)
+      + scheduling algorithm (earliest start, critical path)
+      → computed schedule
+      → rendered as chart (UI/document concern)
+```
+
+If an agent generates a GANTT chart as an output, the rendered chart is a Document (kind: plan or custom "gantt"). But the chart data is always derived from TaskStore — it is never the source of truth.
+
 ## Key Modeling Principles
 
 1. **One type, many kinds.** All work items are Tasks. The `kind` field provides the hierarchy level. This avoids type proliferation and lets TaskStore's DAG operations work uniformly.
 
 2. **Hierarchy is optional.** Not every team uses all levels. A solo developer might use flat tasks. An enterprise might use all six levels. The model supports both.
 
-3. **Time-boxes are separate.** Sprints/Cycles are not Tasks. They are an orthogonal scheduling concept. If gyres needs time-boxing, it should be a separate type with a many-to-many relationship to Tasks.
+3. **Time-boxes are separate.** Sprints/Cycles are not Tasks. They are an orthogonal scheduling concept with a many-to-many relationship to Tasks.
 
-4. **Status varies by kind.** Higher levels have simpler lifecycles. Per-kind validation can be layered on via the same `Lifecycle` trait pattern used for Documents, or kept permissive with a single enum.
+4. **Not everything is stored.** Backlogs are queries. GANTT charts are computed views. Burndowns are telemetry. Only work items, documents, and memories are stored primitives. Resist the urge to reify every PM concept as a type.
 
-5. **External tools differ.** The canonical hierarchy is a superset. Adapters map the subset each tool supports.
+5. **Status varies by kind.** Higher levels have simpler lifecycles. Per-kind validation can be layered on via the same `Lifecycle` trait pattern used for Documents, or kept permissive with a single enum.
+
+6. **External tools differ.** The canonical hierarchy is a superset. Adapters map the subset each tool supports.
